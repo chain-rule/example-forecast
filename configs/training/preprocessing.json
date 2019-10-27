@@ -3,7 +3,8 @@
     "project": "example-cloud-project",
     "region": "europe-west1",
     "zone": "europe-west1-b",
-    "job_name": "example-weather-forecast-training"
+    "job_name": "example-weather-forecast-training",
+    "num_workers": 4
   },
   "data": {
     "path": "configs/training/data.sql",
