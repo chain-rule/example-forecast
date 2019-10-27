@@ -35,7 +35,7 @@ data_2 AS (
     latitude,
     longitude,
     -- Compute gaps between observatios
-    ARRAY_AGG(DATE_DIFF(date, IFNULL(date_last, date), DAY) ORDER BY date) AS step,
+    ARRAY_AGG(DATE_DIFF(date, IFNULL(date_last, date), DAY) ORDER BY date) AS duration,
     ARRAY_AGG(temperature ORDER BY date) AS temperature
   FROM
     data_1

@@ -10,6 +10,7 @@
     "schema": [
       { "name": "latitude", "kind": "float32", "transform": "z" },
       { "name": "longitude", "kind": "float32", "transform": "z" },
+      { "name": "duration", "kind": ["float32"], "transform": "z" },
       { "name": "temperature", "kind": ["float32"], "transform": "z" }
     ]
   },
