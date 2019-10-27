@@ -1,5 +1,5 @@
 WITH
-data AS (
+data_1 AS (
   SELECT
     id,
     date,
@@ -27,19 +27,28 @@ data AS (
       PARTITION BY id, EXTRACT(YEAR FROM date)
       ORDER BY date
     )
+),
+data_2 AS (
+  SELECT
+    id,
+    MIN(date) AS date,
+    latitude,
+    longitude,
+    -- Compute gaps between observatios
+    ARRAY_AGG(DATE_DIFF(date, IFNULL(date_last, date), DAY) ORDER BY date) AS step,
+    ARRAY_AGG(temperature ORDER BY date) AS temperature
+  FROM
+    data_1
+  GROUP BY
+    -- Group to have have one record per station and year
+    id, latitude, longitude, EXTRACT(YEAR FROM date)
 )
 SELECT
-  id,
-  MIN(date) AS date,
-  latitude,
-  longitude,
-  -- Compute gaps between observatios
-  ARRAY_AGG(DATE_DIFF(date, IFNULL(date_last, date), DAY) ORDER BY date) AS step,
-  ARRAY_AGG(temperature ORDER BY date) AS temperature
+  *,
+  CASE
+    WHEN EXTRACT(YEAR FROM date) < 2019 THEN 'analysis,training'
+    WHEN MOD(ABS(FARM_FINGERPRINT(id)), 100) < 50 THEN 'validation'
+    ELSE 'testing'
+  END AS mode
 FROM
-  data
-GROUP BY
-  -- Group to have have one record per station and year
-  id, latitude, longitude, EXTRACT(YEAR FROM date)
-ORDER BY
-  id, date
+  data_2

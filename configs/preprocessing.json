@@ -1,0 +1,24 @@
+{
+  "pipeline": {
+    "project": "example-project",
+    "region": "europe-west1",
+    "zone": "europe-west1-b"
+  },
+  "data": {
+    "path": "config/data.sql",
+    "schema": [
+      { "nama": "latitude", "kind": "float64", "transform": "z" },
+      { "nama": "longitude", "kind": "float64", "transform": "z" },
+      { "nama": "temperature", "kind": ["float64"], "transform": "z" }
+    ]
+  },
+  "modes": [
+    { "name": "analysis" },
+    { "name": "training", "transform": "analysis", "shuffle": true },
+    { "name": "validation", "transform": "analysis" },
+    { "name": "testing", "transform": "identity" }
+  ],
+  "output": {
+    "path": "gs://example-forecast"
+  }
+}
