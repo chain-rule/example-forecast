@@ -8,7 +8,7 @@ from tensorflow_transform.beam.tft_beam_io import transform_fn_io
 from tensorflow_transform.tf_metadata import dataset_metadata
 from tensorflow_transform.tf_metadata import dataset_schema
 
-from forecast.data import Schema
+from forecast.schema import Schema
 
 
 class Pipeline(beam.Pipeline):
