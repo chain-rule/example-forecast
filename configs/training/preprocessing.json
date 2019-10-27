@@ -3,7 +3,7 @@
     "project": "example-cloud-project",
     "region": "europe-west1",
     "zone": "europe-west1-b",
-    "job_name": "example-weather-forecast-training",
+    "job_name": "example-weather-forecast-%Y-%m-%d-%H-%M-%S",
     "num_workers": 4
   },
   "data": {
@@ -22,6 +22,6 @@
     { "name": "testing", "transform": "identity" }
   ],
   "output": {
-    "path": "gs://example-weather-forecast/data/training"
+    "path": "gs://example-weather-forecast/data/training/%Y-%m-%d-%H-%M-%S"
   }
 }
