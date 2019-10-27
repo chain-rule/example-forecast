@@ -1,6 +1,6 @@
 {
   "pipeline": {
-    "project": "example-project",
+    "project": "example-cloud-project",
     "region": "europe-west1",
     "zone": "europe-west1-b"
   },
@@ -19,6 +19,6 @@
     { "name": "testing", "transform": "identity" }
   ],
   "output": {
-    "path": "gs://example-forecast"
+    "path": "gs://example-weather-forecast"
   }
 }
