@@ -2,7 +2,8 @@
   "pipeline": {
     "project": "example-cloud-project",
     "region": "europe-west1",
-    "zone": "europe-west1-b"
+    "zone": "europe-west1-b",
+    "job_name": "example-weather-forecast-training"
   },
   "data": {
     "path": "config/training/data.sql",
@@ -19,6 +20,6 @@
     { "name": "testing", "transform": "identity" }
   ],
   "output": {
-    "path": "gs://example-weather-forecast"
+    "path": "gs://example-weather-forecast/data/training"
   }
 }
