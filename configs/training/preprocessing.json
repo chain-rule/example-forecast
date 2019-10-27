@@ -5,7 +5,7 @@
     "zone": "europe-west1-b"
   },
   "data": {
-    "path": "config/data.sql",
+    "path": "config/training/data.sql",
     "schema": [
       { "nama": "latitude", "kind": "float64", "transform": "z" },
       { "nama": "longitude", "kind": "float64", "transform": "z" },
