@@ -44,9 +44,9 @@ def _populate(pipeline, config):
         return mode.name in example['mode']
 
     def _transform(name, value):
-        if not 'transform' in schema[name]:
+        if schema[name].transform is None:
             return value
-        if schema[name]['transform'] == 'z':
+        if schema[name].transform == 'z':
             return tft.scale_to_z_score(value)
         assert False
 

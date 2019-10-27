@@ -6,11 +6,11 @@
     "job_name": "example-weather-forecast-training"
   },
   "data": {
-    "path": "config/training/data.sql",
+    "path": "configs/training/data.sql",
     "schema": [
-      { "nama": "latitude", "kind": "float64", "transform": "z" },
-      { "nama": "longitude", "kind": "float64", "transform": "z" },
-      { "nama": "temperature", "kind": ["float64"], "transform": "z" }
+      { "name": "latitude", "kind": "float32", "transform": "z" },
+      { "name": "longitude", "kind": "float32", "transform": "z" },
+      { "name": "temperature", "kind": ["float32"], "transform": "z" }
     ]
   },
   "modes": [

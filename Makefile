@@ -1,7 +1,7 @@
 all:
 
 training-preprocessing:
-	python -m assistance.main \
+	python -m forecast.main \
 		--action preprocessing \
 		--config configs/training/preprocessing.json
 
