@@ -41,7 +41,7 @@ def _populate(pipeline, config):
         }
 
     def _filter(mode, example):
-        return mode.name in example['mode']
+        return mode['name'] in example['mode']
 
     def _transform(name, value):
         if schema[name].transform is None:
