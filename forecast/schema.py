@@ -43,6 +43,9 @@ class Schema(OrderedDict):
         names = map(lambda field: field.name, fields)
         super().__init__(zip(names, fields))
 
+    def select(self, scope):
+        return [name for name, field in self.items() if field.scope == scope]
+
     def to_feature_spec(self):
 
         def _process(name):

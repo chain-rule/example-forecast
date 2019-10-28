@@ -1,0 +1,40 @@
+{
+  "data": {
+    "path": "gs://example-weather-forecast/data/training/*",
+    "transform_path": "gs://example-weather-forecast/data/training/*",
+    "schema": [
+      { "name": "latitude", "kind": "float32" },
+      { "name": "longitude", "kind": "float32" },
+      { "name": "duration", "kind": ["float32"] },
+      { "name": "temperature", "kind": ["float32"] }
+    ],
+    "modes": {
+      "training": {
+        "spec": "transformed",
+        "shuffle_macro": { "buffer_size": 100 },
+        "interleave": { "cycle_length": 100, "num_parallel_calls": -1 },
+        "shuffle_micro": { "buffer_size": 512 },
+        "map": { "num_parallel_calls": -1 },
+        "batch": { "batch_size": 128 },
+        "prefetch": { "buffer_size": 1 },
+        "repeat": {}
+      },
+      "validation": {
+        "spec": "transformed",
+        "shuffle_macro": { "buffer_size": 100 },
+        "interleave": { "cycle_length": 100, "num_parallel_calls": -1 },
+        "map": { "num_parallel_calls": -1 },
+        "batch": { "batch_size": 128 },
+        "prefetch": { "buffer_size": 1 },
+        "repeat": {}
+      },
+      "testing": {
+        "spec": "original",
+        "interleave": { "cycle_length": 100, "num_parallel_calls": -1 },
+        "map": { "num_parallel_calls": -1 },
+        "batch": { "batch_size": 128 },
+        "prefetch": { "buffer_size": 1 }
+      }
+    }
+  }
+}
