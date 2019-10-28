@@ -44,10 +44,7 @@ class Data:
             spec = self.transform.transformed_feature_spec()
             example = tf.io.parse_single_example(proto, spec)
             return (
-                {
-                    name: example[name]
-                    for name in self.contextual_names
-                },
+                {name: example[name] for name in self.contextual_names},
                 {
                     name: self.schema[name].to_dense(example[name])
                     for name in self.sequential_names
@@ -63,10 +60,7 @@ class Data:
 
         def _shape():
             return (
-                {
-                    name: tf.TensorShape([])
-                    for name in self.contextual_names
-                },
+                {name: tf.TensorShape([]) for name in self.contextual_names},
                 {
                     name: tf.TensorShape([None])
                     for name in self.sequential_names

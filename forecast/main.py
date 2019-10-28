@@ -5,7 +5,6 @@ import json
 from forecast.support import timestamp
 from forecast.task import Task
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--action', type=str, required=True)
