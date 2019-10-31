@@ -14,15 +14,17 @@ from forecast.schema import Schema
 class Pipeline(beam.Pipeline):
 
     def __init__(self, config):
+        # Set options pertaining to the Dataflow runner
         options = dict(
-            flags=[],
             runner='DataflowRunner',
             staging_location=_locate(config, 'staging'),
             temp_location=_locate(config, 'temporary'),
             setup_file=os.path.join('.', 'setup.py'),
             save_main_session=True,
+            flags=[],
         )
         options.update(config['pipeline'])
+        # Create and populate a Beam pipeline
         super().__init__(options=beam.pipeline.PipelineOptions(**options))
         with tt_beam.Context(temp_dir=_locate(config, 'temporary')):
             _populate(self, config)
@@ -33,51 +35,66 @@ def _locate(config, *names):
 
 
 def _populate(pipeline, config):
+    # Create a schema according to the configuration file
     schema = Schema(config['data']['schema'])
 
     def _analyze(example):
         return {
-            name: _transform(name, example[name]) for name in example.keys()
+            name: _analyze_column(schema[name], example[name])
+            for name in example.keys()
         }
+
+    def _analyze_column(column, value):
+        if column.transform is None:
+            return value
+        if column.transform == 'z':
+            return tft.scale_to_z_score(value)
+        # Define other transforms, such as vocabulary look-up
+        assert False
 
     def _filter(mode, example):
         return mode['name'] in example['mode']
 
-    def _transform(name, value):
-        if schema[name].transform is None:
-            return value
-        if schema[name].transform == 'z':
-            return tft.scale_to_z_score(value)
-        assert False
-
+    # Read the SQL code
     query = open(config['data']['path']).read()
+    # Create a BigQuery source
     source = beam.io.BigQuerySource(query=query, use_standard_sql=True)
+    # Create metadata needed later
     spec = schema.to_feature_spec()
     meta = dataset_metadata.DatasetMetadata(
         schema=dataset_schema.from_feature_spec(spec))
+    # Read data from BigQuery
     data = pipeline \
         | 'read' >> beam.io.Read(source)
     transform_functions = {}
+    # Loop over modes whose purpose is analysis
     for mode in config['modes']:
         if 'transform' in mode:
             continue
         name = mode['name']
+        # Select examples that belong to the current mode
         data_ = data \
             | '%s-filter' % name >> beam.Filter(partial(_filter, mode))
+        # Analyze the examples
         transform_functions[name] = (data_, meta) \
-            | '%s-analize' % name >> tt_beam.AnalyzeDataset(_analyze)
+            | '%s-analyze' % name >> tt_beam.AnalyzeDataset(_analyze)
         path = _locate(config, name, 'transform')
+        # Store the transform function
         transform_functions[name] \
             | '%s-write-transform' % name >> transform_fn_io.WriteTransformFn(path)
+    # Loop over modes whose purpose is transformation
     for mode in config['modes']:
         if not 'transform' in mode:
             continue
         name = mode['name']
+        # Select examples that belong to the current mode
         data_ = data \
             | '%s-filter' % name >> beam.Filter(partial(_filter, mode))
+        # Shuffle examples if needed
         if mode.get('shuffle', False):
             data_ = data_ \
                 | '%s-shuffle' % name >> beam.transforms.Reshuffle()
+        # Transform the examples using an appropriate transform function
         if mode['transform'] == 'identity':
             coder = tft.coders.ExampleProtoCoder(meta.schema)
         else:
@@ -85,6 +102,7 @@ def _populate(pipeline, config):
                 | '%s-transform' % name >> tt_beam.TransformDataset()
             coder = tft.coders.ExampleProtoCoder(meta_.schema)
         path = _locate(config, name, 'records', 'part')
+        # Store the transformed examples
         data_ \
             | '%s-encode' % name >> beam.Map(coder.encode) \
             | '%s-write-records' % name >> beam.io.tfrecordio.WriteToTFRecord(path)
