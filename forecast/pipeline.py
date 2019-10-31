@@ -102,7 +102,7 @@ def _populate(pipeline, config):
                 | '%s-transform' % name >> tt_beam.TransformDataset()
             coder = tft.coders.ExampleProtoCoder(meta_.schema)
         path = _locate(config, name, 'records', 'part')
-        # Store the transformed examples
+        # Store the transformed examples as TFRecords
         data_ \
             | '%s-encode' % name >> beam.Map(coder.encode) \
             | '%s-write-records' % name >> beam.io.tfrecordio.WriteToTFRecord(path)
