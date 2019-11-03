@@ -66,8 +66,8 @@ def _populate(pipeline, config):
     # Read data from BigQuery
     data = pipeline \
         | 'read' >> beam.io.Read(source)
-    transform_functions = {}
     # Loop over modes whose purpose is analysis
+    transform_functions = {}
     for mode in config['modes']:
         if 'transform' in mode:
             continue
