@@ -74,14 +74,14 @@ def _populate(pipeline, config):
         name = mode['name']
         # Select examples that belong to the current mode
         data_ = data \
-            | '%s-filter' % name >> beam.Filter(partial(_filter, mode))
+            | name + '-filter' >> beam.Filter(partial(_filter, mode))
         # Analyze the examples
         transform_functions[name] = (data_, meta) \
-            | '%s-analyze' % name >> tt_beam.AnalyzeDataset(_analyze)
+            | name + '-analyze' >> tt_beam.AnalyzeDataset(_analyze)
         path = _locate(config, name, 'transform')
         # Store the transform function
         transform_functions[name] \
-            | '%s-write-transform' % name >> transform_fn_io.WriteTransformFn(path)
+            | name + '-write-transform' >> transform_fn_io.WriteTransformFn(path)
     # Loop over modes whose purpose is transformation
     for mode in config['modes']:
         if not 'transform' in mode:
@@ -89,20 +89,20 @@ def _populate(pipeline, config):
         name = mode['name']
         # Select examples that belong to the current mode
         data_ = data \
-            | '%s-filter' % name >> beam.Filter(partial(_filter, mode))
+            | name + '-filter' >> beam.Filter(partial(_filter, mode))
         # Shuffle examples if needed
         if mode.get('shuffle', False):
             data_ = data_ \
-                | '%s-shuffle' % name >> beam.transforms.Reshuffle()
+                | name + '-shuffle' >> beam.transforms.Reshuffle()
         # Transform the examples using an appropriate transform function
         if mode['transform'] == 'identity':
             coder = tft.coders.ExampleProtoCoder(meta.schema)
         else:
             data_, meta_ = ((data_, meta), transform_functions[mode['transform']]) \
-                | '%s-transform' % name >> tt_beam.TransformDataset()
+                | name + '-transform' >> tt_beam.TransformDataset()
             coder = tft.coders.ExampleProtoCoder(meta_.schema)
         path = _locate(config, name, 'records', 'part')
         # Store the transformed examples as TFRecords
         data_ \
-            | '%s-encode' % name >> beam.Map(coder.encode) \
-            | '%s-write-records' % name >> beam.io.tfrecordio.WriteToTFRecord(path)
+            | name + '-encode' >> beam.Map(coder.encode) \
+            | name + '-write-records' >> beam.io.tfrecordio.WriteToTFRecord(path)
