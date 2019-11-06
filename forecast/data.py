@@ -13,11 +13,15 @@ class Data:
         # matching a given pattern and take the last one, assuming that the
         # alphabetical order is also chronological
         self.path = list_files(config['path'])[-1]
-        # Find the path of the latest transformations using the same strategy
+        # Find the path of the latest transforms using the same strategy
         transform_path = list_files(config['transform_path'])[-1]
-        # Load the transformation called “analysis”
-        self.transform = tft.TFTransformOutput(
-            os.path.join(transform_path, 'analysis', 'transform'))
+        # Load all transforms
+        transforms = [mode['transform'] for mode in config['modes'].values()]
+        self.transforms = {
+            name: tft.TFTransformOutput( \
+                os.path.join(transform_path, name, 'transform'))
+            for name in set(transforms)
+        }
         # Create a schema according to the configuration file
         self.schema = Schema(config['schema'])
         # Find the names of contextual columns
@@ -27,15 +31,17 @@ class Data:
         self.modes = config['modes']
 
     def create(self, name):
+        config = self.modes[name]
 
-        def _preprocess_original(proto):
+        def _preprocess(proto):
             spec = self.schema.to_feature_spec()
             example = tf.parse_single_example(proto, spec)
             for name in self.contextual_names:
                 example[name] = tf.expand_dims(example[name], -1)
             for name in self.sequential_names:
                 example[name] = tf.sparse.expand_dims(example[name], -1)
-            example = self.transform.transform_raw_features(example)
+            example = self.transforms[config['transform']] \
+                .transform_raw_features(example)
             return (
                 {
                     name: tf.reshape(example[name], [-1])
@@ -50,7 +56,8 @@ class Data:
             )
 
         def _preprocess_transformed(proto):
-            spec = self.transform.transformed_feature_spec()
+            spec = self.transforms[config['transform']] \
+                .transformed_feature_spec()
             example = tf.io.parse_single_example(proto, spec)
             return (
                 {name: example[name] for name in self.contextual_names},
@@ -78,7 +85,8 @@ class Data:
                 },
             )
 
-        config = self.modes[name]
+        _preprocess = '_transformed' if config.get('transformed', False) else ''
+        _preprocess = locals()['_preprocess' + _preprocess]
         # List all files matching a given pattern
         pattern = [self.path, name, 'records', 'part-*']
         dataset = tf.data.Dataset.list_files(os.path.join(*pattern))
@@ -92,12 +100,11 @@ class Data:
         # Shuffle the examples if needed
         if 'shuffle_micro' in config:
             dataset = dataset.shuffle(**config['shuffle_micro'])
+        # Preprocess the examples with respect to a given spec, pad the examples
+        # and form batches of different sizes, and postprocess the batches
         dataset = dataset \
-            # Preprocess the examples with respect to a given spec
-            .map(locals()['_preprocess_' + config['spec']], **config['map']) \
-            # Pad the examples and form batches of different sizes
+            .map(_preprocess, **config['map']) \
             .padded_batch(padded_shapes=_shape(), **config['batch']) \
-            # Postprocess the batches
             .map(_postprocess, **config['map'])
         # Prefetch the batches if needed
         if 'prefetch' in config:
