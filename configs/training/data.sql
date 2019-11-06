@@ -29,7 +29,7 @@ data_1 AS (
       ORDER BY date
     )
 ),
--- Group into complete examples
+-- Group into complete examples (a specific station and a specific year)
 data_2 AS (
   SELECT
     id,
