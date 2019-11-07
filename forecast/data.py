@@ -111,7 +111,7 @@ class Data:
         # Prefetch the batches if needed
         if 'prefetch' in config:
             dataset = dataset.prefetch(**config['prefetch'])
-        # Repeat the data once the source is exhausted
+        # Repeat the data once the source is exhausted if needed
         if 'repeat' in config:
             dataset = dataset.repeat(**config['repeat'])
         return dataset
