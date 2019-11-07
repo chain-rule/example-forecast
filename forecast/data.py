@@ -15,13 +15,6 @@ class Data:
         self.path = list_files(config['path'])[-1]
         # Find the path of the latest transforms using the same strategy
         transform_path = list_files(config['transform_path'])[-1]
-        # Load all transforms
-        transforms = [mode['transform'] for mode in config['modes'].values()]
-        self.transforms = {
-            name: tft.TFTransformOutput( \
-                os.path.join(transform_path, name, 'transform'))
-            for name in set(transforms)
-        }
         # Create a schema according to the configuration file
         self.schema = Schema(config['schema'])
         # Find the names of contextual columns
@@ -29,11 +22,31 @@ class Data:
         # Find the names of sequential columns
         self.sequential_names = self.schema.select('sequential')
         self.modes = config['modes']
+        # Load all transforms
+        transforms = [mode['transform'] for mode in self.modes.values()]
+        self.transforms = {
+            name: tft.TFTransformOutput( \
+                os.path.join(transform_path, name, 'transform'))
+            for name in set(transforms)
+        }
 
     def create(self, name):
         config = self.modes[name]
 
-        def _preprocess(proto):
+        def _preprocess_transformed(proto):
+            spec = self.transforms[config['transform']] \
+                .transformed_feature_spec()
+            example = tf.io.parse_single_example(proto, spec)
+            return (
+                {name: example[name] for name in self.contextual_names},
+                {
+                    # Convert the sequential columns from sparse to dense
+                    name: self.schema[name].to_dense(example[name])
+                    for name in self.sequential_names
+                },
+            )
+
+        def _preprocess_untransformed(proto):
             spec = self.schema.to_feature_spec()
             example = tf.parse_single_example(proto, spec)
             for name in self.contextual_names:
@@ -55,19 +68,6 @@ class Data:
                 },
             )
 
-        def _preprocess_transformed(proto):
-            spec = self.transforms[config['transform']] \
-                .transformed_feature_spec()
-            example = tf.io.parse_single_example(proto, spec)
-            return (
-                {name: example[name] for name in self.contextual_names},
-                {
-                    # Convert the sequential columns from sparse to dense
-                    name: self.schema[name].to_dense(example[name])
-                    for name in self.sequential_names
-                },
-            )
-
         def _postprocess(contextual, sequential):
             sequential = {
                 # Convert the sequential columns from dense to sparse
@@ -85,8 +85,10 @@ class Data:
                 },
             )
 
-        _preprocess = '_transformed' if config.get('transformed', False) else ''
-        _preprocess = locals()['_preprocess' + _preprocess]
+        if config.get('transformed', False):
+            _preprocess = _preprocess_transformed
+        else:
+            _preprocess = _preprocess_untransformed
         # List all files matching a given pattern
         pattern = [self.path, name, 'records', 'part-*']
         dataset = tf.data.Dataset.list_files(os.path.join(*pattern))
