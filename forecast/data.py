@@ -85,10 +85,6 @@ class Data:
                 },
             )
 
-        if config.get('transformed', False):
-            _preprocess = _preprocess_transformed
-        else:
-            _preprocess = _preprocess_untransformed
         # List all files matching a given pattern
         pattern = [self.path, name, 'records', 'part-*']
         dataset = tf.data.Dataset.list_files(os.path.join(*pattern))
@@ -104,6 +100,10 @@ class Data:
             dataset = dataset.shuffle(**config['shuffle_micro'])
         # Preprocess the examples with respect to a given spec, pad the examples
         # and form batches of different sizes, and postprocess the batches
+        if config.get('transformed', False):
+            _preprocess = _preprocess_transformed
+        else:
+            _preprocess = _preprocess_untransformed
         dataset = dataset \
             .map(_preprocess, **config['map']) \
             .padded_batch(padded_shapes=_shape(), **config['batch']) \
