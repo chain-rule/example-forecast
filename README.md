@@ -5,7 +5,8 @@ further details.
 
 ## Usage
 
-In order to prepare data for training, run
+In order to prepare data for training, update the corresponding [configuration
+file](/configs/training/preprocessing.json) and run
 
 ```sh
 make training-preprocessing
