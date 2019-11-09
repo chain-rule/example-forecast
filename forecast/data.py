@@ -86,7 +86,7 @@ class Data:
             )
 
         # List all files matching a given pattern
-        pattern = [self.path, name, 'records', 'part-*']
+        pattern = [self.path, name, 'examples', 'part-*']
         dataset = tf.data.Dataset.list_files(os.path.join(*pattern))
         # Shuffle the files if needed
         if 'shuffle_macro' in config:
